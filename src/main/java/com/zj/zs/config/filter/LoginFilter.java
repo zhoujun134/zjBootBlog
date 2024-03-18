@@ -9,15 +9,21 @@ import com.zj.zs.domain.dto.UserInfoDto;
 import com.zj.zs.domain.entity.UserDO;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 
+import javax.annotation.Resource;
 import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
 import java.io.IOException;
 import java.util.Objects;
 
 @Slf4j
 @AllArgsConstructor
+@WebFilter
+@Order(1)
 public class LoginFilter implements Filter {
 
+    @Resource
     private UserManager userManager;
 
     @Override
@@ -43,13 +49,14 @@ public class LoginFilter implements Filter {
             log.warn("LoginFilter#####doFilter: 未获取到用户信息！");
             isException = true;
         }
-        if (!isException) {
-            try {
-                filterChain.doFilter(servletRequest, servletResponse);
-            } catch (Exception exception) {
-                log.error("LoginFilter#####doFilter: 出现异常了: exception message={}",
-                        exception.getMessage(), exception);
-            } finally {
+        try {
+            filterChain.doFilter(servletRequest, servletResponse);
+        } catch (Exception exception) {
+            log.error("LoginFilter#####doFilter: 出现异常了: exception message={}",
+                    exception.getMessage(), exception);
+            throw exception;
+        } finally {
+            if (!isException) {
                 ZsRequestContext.removeAll();
             }
         }
